@@ -1,0 +1,75 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>State demand archetypes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f4f6f7;--card:#fff;--ink:#16222b;--mut:#5d6b75;--line:#dde3e7;--c0:#0f766e;--c1:#d97706;--c2:#7c5cbf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10171c;--card:#182229;--ink:#e8eef2;--mut:#93a3ad;--line:#2a3943;--c0:#2dd4bf;--c1:#fbbf24;--c2:#a78bfa}}
+:root[data-theme="dark"]{--bg:#10171c;--card:#182229;--ink:#e8eef2;--mut:#93a3ad;--line:#2a3943;--c0:#2dd4bf;--c1:#fbbf24;--c2:#a78bfa}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:28px 18px 48px}
+h1{font-size:30px;line-height:1.15;margin:0 0 6px;font-weight:600;letter-spacing:-.02em}
+.sub{color:var(--mut);max-width:62ch;margin:0 0 22px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;cursor:pointer;display:flex;gap:8px;align-items:center}
+.chip i{width:10px;height:10px;border-radius:50%}
+.chip[aria-pressed=false]{opacity:.45}
+.chip:focus-visible,th button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.kpi,.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.kpi b{display:block;font-size:26px;font-weight:600;letter-spacing:-.01em}
+.kpi span{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+h2{font-size:16px;margin:0 0 2px;font-weight:600}.note{color:var(--mut);font-size:13px;margin:0 0 10px}
+svg{width:100%;height:auto;display:block}svg text{fill:var(--mut);font:11px "Instrument Sans",system-ui,sans-serif}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.4;opacity:0;z-index:5;max-width:220px}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+th,td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}th button{all:unset;cursor:pointer;color:var(--mut);font-weight:500}
+td i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+.cl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px}
+.cl .card{border-top:4px solid var(--c)}.cl h3{margin:0 0 6px;font-size:15px}.cl p{margin:2px 0;color:var(--mut);font-size:13px}.cl p b{color:var(--ink);font-weight:600}
+</style></head><body><main>
+<h1>How India’s states and grids use power</h1>
+<p class="sub">36 states, union territories and grid entities grouped into three demand archetypes by mean requirement, summer surge, load factor and seasonality.</p>
+<div class="chips" id="chips"></div>
+<div class="kpis" id="kpis"></div>
+<div class="cl" id="cl"></div>
+<div class="grid">
+<div class="card"><h2>Summer surge vs load factor</h2><p class="note">Bubble area shows mean requirement. Hover for details.</p><svg id="sc" viewBox="0 0 560 380"></svg></div>
+<div class="card"><h2>Largest by mean requirement</h2><p class="note">Top 10 in the current selection.</p><svg id="bar" viewBox="0 0 440 380"></svg></div>
+</div>
+<div class="card"><h2>All entities</h2><p class="note">Select a column heading to sort.</p><div class="wrap"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div></div>
+<div class="tip" id="tip"></div>
+</main><script>
+const D=[["Andaman & Nicobar", 0, 36.67, 11.54, 79.17, 0.16], ["Andhra Pradesh", 0, 7593.0, 10.31, 75.55, 0.18], ["Arunachal Pradesh", 2, 94.83, -0.35, 68.32, 0.15], ["Assam", 1, 1030.83, 34.1, 67.19, 0.56], ["Bihar", 1, 4055.0, 39.8, 74.46, 0.58], ["Chandigarh", 1, 152.67, 47.57, 61.44, 0.71], ["Chhattisgarh", 0, 3997.17, 9.81, 86.32, 0.3], ["DVC", 0, 2087.0, 3.25, 83.52, 0.11], ["Dadra & Nagar Haveli and Daman & Diu", 0, 904.83, -2.08, 90.78, 0.12], ["Delhi", 1, 3215.67, 55.55, 66.24, 0.66], ["Goa", 0, 485.0, 13.5, 80.64, 0.25], ["Gujarat", 0, 14169.67, 16.74, 75.58, 0.26], ["Haryana", 1, 5756.17, 37.19, 69.43, 0.54], ["Himachal Pradesh", 0, 1074.0, -5.43, 73.1, 0.29], ["J&K and Ladakh", 0, 1680.17, -10.22, 76.52, 0.25], ["Jharkhand", 0, 1359.5, 20.46, 78.55, 0.34], ["Karnataka", 0, 9351.33, -1.35, 72.29, 0.24], ["Kerala", 0, 2856.0, 8.75, 71.52, 0.25], ["Lakshadweep", 2, 6.5, 5.26, 66.45, 0.15], ["Madhya Pradesh", 0, 9262.0, -5.91, 78.18, 0.23], ["Maharashtra", 0, 18623.17, 6.85, 81.82, 0.17], ["Manipur", 2, 102.83, -4.13, 53.97, 0.19], ["Meghalaya", 2, 180.67, -3.98, 68.13, 0.18], ["Mizoram", 2, 63.17, -6.63, 55.55, 0.16], ["Nagaland", 2, 81.5, 18.3, 61.53, 0.31], ["Odisha", 0, 3832.83, 26.88, 76.7, 0.31], ["Puducherry", 0, 303.0, 22.79, 79.44, 0.29], ["Punjab", 1, 6008.5, 47.23, 64.28, 0.75], ["Rajasthan", 0, 9206.67, -1.96, 72.26, 0.26], ["Sikkim", 2, 51.0, -22.09, 61.71, 0.39], ["Tamil Nadu", 0, 11671.33, 15.95, 82.32, 0.24], ["Telangana", 0, 8207.83, -12.12, 72.7, 0.36], ["Tripura", 1, 145.0, 29.55, 65.32, 0.43], ["Uttar Pradesh", 1, 13934.5, 44.67, 71.37, 0.63], ["Uttarakhand", 0, 1412.33, 16.89, 71.51, 0.34], ["West Bengal", 0, 6271.83, 33.85, 78.08, 0.41]].map(r=>({n:r[0],c:r[1],mu:r[2],sg:r[3],lf:r[4],sr:r[5]}));
+const N={"0": "Steady Baseload & High-Utilization Grid", "2": "Low-Volume Hill & Island Enclave", "1": "Summer Heatwave Surge Spiker"},short={0:"Steady baseload",1:"Summer spiker",2:"Hill and island enclave"};
+const col=c=>`var(--c${c})`,on=new Set([0,1,2]),f=new Intl.NumberFormat("en-IN",{maximumFractionDigits:0});
+let sk="mu",asc=false;const $=id=>document.getElementById(id),tip=$("tip");
+const cur=()=>D.filter(d=>on.has(d.c)),avg=(a,k)=>a.length?a.reduce((s,d)=>s+d[k],0)/a.length:0;
+function showTip(e,d){tip.innerHTML=`<b>${d.n}</b><br>${short[d.c]}<br>Mean requirement ${f.format(d.mu)}<br>Summer surge ${d.sg.toFixed(1)}%<br>Load factor ${d.lf.toFixed(1)}%<br>Seasonality ${d.sr.toFixed(2)}`;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+14,innerWidth-230)+"px";tip.style.top=(e.clientY+14)+"px"}
+const hide=()=>tip.style.opacity=0;
+function chips(){$("chips").innerHTML=[0,1,2].map(c=>`<button class="chip" data-c="${c}" aria-pressed="${on.has(c)}"><i style="background:${col(c)}"></i>${N[c]} (${D.filter(d=>d.c==c).length})</button>`).join("");
+document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const c=+b.dataset.c;on.has(c)?(on.size>1&&on.delete(c)):on.add(c);render()})}
+function kpis(){const a=cur(),t=a.reduce((s,d)=>s+d.mu,0),top=[...a].sort((x,y)=>y.sg-x.sg)[0];
+$("kpis").innerHTML=[[a.length,"entities selected"],[f.format(t),"combined mean requirement"],[avg(a,"lf").toFixed(1)+"%","average load factor"],[top.sg.toFixed(1)+"%","highest summer surge ("+top.n+")"]].map(k=>`<div class="kpi"><b>${k[0]}</b><span>${k[1]}</span></div>`).join("")}
+function cl(){$("cl").innerHTML=[0,1,2].filter(c=>on.has(c)).map(c=>{const a=D.filter(d=>d.c==c),ex=[...a].sort((x,y)=>y.mu-x.mu).slice(0,3).map(d=>d.n).join(", ");
+return `<div class="card" style="--c:${col(c)}"><h3>${N[c]}</h3><p><b>${a.length}</b> entities, <b>${f.format(a.reduce((s,d)=>s+d.mu,0))}</b> combined mean requirement</p><p>Surge <b>${avg(a,"sg").toFixed(1)}%</b> · load factor <b>${avg(a,"lf").toFixed(1)}%</b> · seasonality <b>${avg(a,"sr").toFixed(2)}</b></p><p>Largest: ${ex}</p></div>`}).join("")}
+function sc(){const W=560,H=380,m={l:44,r:14,t:10,b:40},x0=-25,x1=60,y0=50,y1=95,X=v=>m.l+(v-x0)/(x1-x0)*(W-m.l-m.r),Y=v=>H-m.b-(v-y0)/(y1-y0)*(H-m.t-m.b);
+let s="";for(let v=-20;v<=60;v+=20)s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--line)"/><text x="${X(v)}" y="${H-m.b+16}" text-anchor="middle">${v}%</text>`;
+for(let v=50;v<=95;v+=15)s+=`<line y1="${Y(v)}" y2="${Y(v)}" x1="${m.l}" x2="${W-m.r}" stroke="var(--line)"/><text x="${m.l-6}" y="${Y(v)+4}" text-anchor="end">${v}%</text>`;
+s+=`<line x1="${X(0)}" x2="${X(0)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--mut)" stroke-dasharray="3 3"/><text x="${(W+m.l)/2}" y="${H-6}" text-anchor="middle">Summer surge</text><text transform="translate(12 ${H/2}) rotate(-90)" text-anchor="middle">Load factor</text>`;
+[...cur()].sort((a,b)=>b.mu-a.mu).forEach((d,i)=>{s+=`<circle data-i="${D.indexOf(d)}" cx="${X(d.sg)}" cy="${Y(d.lf)}" r="${Math.max(3.5,Math.sqrt(d.mu)/5.2)}" fill="${col(d.c)}" fill-opacity=".55" stroke="${col(d.c)}" stroke-width="1.5"/>`});
+$("sc").innerHTML=s;$("sc").querySelectorAll("circle").forEach(c=>{const d=D[c.dataset.i];c.onmousemove=e=>showTip(e,d);c.onmouseleave=hide})}
+function bar(){const a=[...cur()].sort((x,y)=>y.mu-x.mu).slice(0,10),mx=a[0].mu,rh=34;let s="";
+a.forEach((d,i)=>{const y=i*rh+6,w=d.mu/mx*220;s+=`<text x="128" y="${y+15}" text-anchor="end" style="fill:var(--ink)">${d.n.length>18?d.n.slice(0,17)+"…":d.n}</text><rect x="136" y="${y+3}" width="${w}" height="18" rx="3" fill="${col(d.c)}" data-i="${D.indexOf(d)}"/><text x="${140+w}" y="${y+16}">${f.format(d.mu)}</text>`});
+$("bar").setAttribute("viewBox",`0 0 440 ${a.length*rh+8}`);$("bar").innerHTML=s;$("bar").querySelectorAll("rect").forEach(r=>{const d=D[r.dataset.i];r.onmousemove=e=>showTip(e,d);r.onmouseleave=hide})}
+const cols=[["n","Entity"],["c","Archetype"],["mu","Mean requirement"],["sg","Summer surge %"],["lf","Load factor %"],["sr","Seasonality"]];
+function table(){$("th").innerHTML="<tr>"+cols.map(c=>`<th aria-sort="${sk==c[0]?(asc?"ascending":"descending"):"none"}"><button data-k="${c[0]}">${c[1]}${sk==c[0]?(asc?" ↑":" ↓"):""}</button></th>`).join("")+"</tr>";
+document.querySelectorAll("th button").forEach(b=>b.onclick=()=>{const k=b.dataset.k;sk==k?asc=!asc:(sk=k,asc=k=="n");table();rows()});rows()}
+function rows(){const a=[...cur()].sort((x,y)=>(typeof x[sk]=="string"?x[sk].localeCompare(y[sk]):x[sk]-y[sk])*(asc?1:-1));
+$("tb").innerHTML=a.map(d=>`<tr><td>${d.n}</td><td style="text-align:left"><i style="background:${col(d.c)}"></i>${short[d.c]}</td><td>${f.format(d.mu)}</td><td>${d.sg.toFixed(1)}</td><td>${d.lf.toFixed(1)}</td><td>${d.sr.toFixed(2)}</td></tr>`).join("")}
+function render(){chips();kpis();cl();sc();bar();table()}render();
+</script></body></html>
