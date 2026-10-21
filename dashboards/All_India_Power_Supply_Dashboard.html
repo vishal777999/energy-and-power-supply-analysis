@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>All-India Power Supply Dashboard, Jan–Aug 2026</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1b2430;--mut:#6a7686;--line:#e2e6ec;--a:#2f5bd8;--b:#f0a020;--c:#d6453d;--g:#1f9d6b;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151c;--card:#182029;--ink:#e8edf3;--mut:#94a1b2;--line:#2a3541;--a:#7a9bff;--b:#f5b84a;--c:#ff7a70;--g:#4cc995;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10151c;--card:#182029;--ink:#e8edf3;--mut:#94a1b2;--line:#2a3541;--a:#7a9bff;--b:#f5b84a;--c:#ff7a70;--g:#4cc995;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,Helvetica,Arial,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 40px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:20px}
+h1{font-size:24px;margin:0 0 2px;font-weight:700}p.sub{margin:0;color:var(--mut)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;color:var(--ink);padding:8px 14px;font:inherit;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--a);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--b);outline-offset:-2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.k,.c{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.k b{display:block;font-size:24px;line-height:1.2}.k span{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:12px}
+.c h2{font-size:15px;margin:0 0 2px}.c p{margin:0 0 8px;color:var(--mut);font-size:13px}
+svg{width:100%;height:auto;display:block}svg text{fill:var(--mut);font-size:11px}
+.lg{display:flex;gap:14px;font-size:12px;color:var(--mut);margin-top:4px}.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.tw{overflow-x:auto;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-weight:600}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 9px;border-radius:6px;font-size:12px;opacity:0;z-index:5}
+</style></head><body><main>
+<header><div><h1>All-India power supply</h1><p class="sub">Monthly energy and peak demand, January–August 2026</p></div>
+<div class="seg" id="seg" role="group" aria-label="Financial year"></div></header>
+<section class="kpis" id="kpis"></section>
+<section class="grid">
+<div class="c"><h2>Energy requirement vs supplied</h2><p>Million units (MU) per month</p><div id="c1"></div><div class="lg"><span><i style="background:var(--a)"></i>Requirement</span><span><i style="background:var(--b)"></i>Supplied</span></div></div>
+<div class="c"><h2>Peak demand vs peak met</h2><p>Megawatts (MW)</p><div id="c2"></div><div class="lg"><span><i style="background:var(--a)"></i>Peak demand</span><span><i style="background:var(--g)"></i>Peak met</span></div></div>
+<div class="c"><h2>Energy not supplied</h2><p>MU per month; the shortfall rose after March</p><div id="c3"></div></div>
+<div class="c"><h2>Load factor</h2><p>Percent; average demand relative to peak</p><div id="c4"></div></div>
+</section>
+<div class="c tw" style="margin-top:12px"><table id="tb"></table></div>
+</main><div id="tip"></div>
+<script>
+const D=[["Jan",141522,141455,67,245444,245416,28,4565.2258,77.4716,"FY2025-26"],["Feb",131911,131883,28,244209,244206,3,4711.1071,80.3643,"FY2025-26"],["Mar",148147,148093,54,238379,238378,1,4778.9355,83.5017,"FY2025-26"],["Apr",152956,152743,213,256117,256117,0,5098.5333,82.8305,"FY2026-27"],["May",163861,163561,300,270832,270820,12,5285.8387,81.1757,"FY2026-27"],["Jun",165307,165125,182,264768,264768,0,5510.2333,86.6193,"FY2026-27"],["Jul",168971,168779,192,270209,270203,6,5450.6774,83.9567,"FY2026-27"],["Aug",168032,167829,203,258276,258270,6,5420.3871,87.3414,"FY2026-27"]].map(r=>({m:r[0],req:r[1],sup:r[2],ns:r[3],pk:r[4],met:r[5],dnm:r[6],rpd:r[7],lf:r[8],fy:r[9]}));
+const $=id=>document.getElementById(id),n=(x,d=0)=>x.toLocaleString("en-IN",{maximumFractionDigits:d}),V=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let fy="All";const tip=$("tip");
+function show(e,t){tip.textContent=t;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+12,innerWidth-190)+"px";tip.style.top=e.clientY+12+"px"}
+function chart(id,rows,series,type,fmt,zero){
+ const W=520,H=230,L=52,R=10,T=10,B=26,pw=W-L-R,ph=H-T-B;
+ const all=series.flatMap(s=>rows.map(r=>r[s.k]));let lo=zero?0:Math.min(...all),hi=Math.max(...all);
+ if(!zero){const p=(hi-lo)*.15||1;lo-=p;hi+=p}else hi*=1.1;
+ const y=v=>T+ph-(v-lo)/(hi-lo)*ph,step=pw/rows.length;let s=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+ for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,yy=y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="${V("--line")}"/><text x="${L-6}" y="${yy+4}" text-anchor="end">${fmt(v)}</text>`}
+ rows.forEach((r,i)=>{const cx=L+step*(i+.5);s+=`<text x="${cx}" y="${H-8}" text-anchor="middle">${r.m}</text>`;
+  if(type=="bar"){const bw=Math.min(28,step*.7/series.length);series.forEach((q,j)=>{const x=cx-bw*series.length/2+bw*j,yy=y(r[q.k]);s+=`<rect x="${x}" y="${yy}" width="${bw-2}" height="${T+ph-yy}" rx="2" fill="${V(q.c)}" data-t="${r.m}: ${q.n} ${n(r[q.k],1)}"/>`})}});
+ if(type=="line")series.forEach(q=>{s+=`<polyline fill="none" stroke="${V(q.c)}" stroke-width="2.5" points="${rows.map((r,i)=>`${L+step*(i+.5)},${y(r[q.k])}`).join(" ")}"/>`+rows.map((r,i)=>`<circle cx="${L+step*(i+.5)}" cy="${y(r[q.k])}" r="4" fill="${V(q.c)}" data-t="${r.m}: ${q.n} ${n(r[q.k],1)}"/>`).join("")});
+ $(id).innerHTML=s+"</svg>";
+ $(id).querySelectorAll("[data-t]").forEach(el=>{el.onmousemove=e=>show(e,el.dataset.t);el.onmouseleave=()=>tip.style.opacity=0})}
+function render(){
+ const r=D.filter(d=>fy=="All"||d.fy==fy),sum=k=>r.reduce((a,d)=>a+d[k],0),mx=k=>Math.max(...r.map(d=>d[k]));
+ const kp=[[n(sum("req"))+" MU","Energy requirement"],[n(sum("sup"))+" MU","Energy supplied"],[n(sum("ns"))+" MU","Energy not supplied ("+(sum("ns")/sum("req")*100).toFixed(3)+"%)"],[n(mx("pk"))+" MW","Highest peak demand"],[(r.reduce((a,d)=>a+d.lf,0)/r.length).toFixed(1)+"%","Average load factor"]];
+ $("kpis").innerHTML=kp.map(k=>`<div class="k"><b>${k[0]}</b><span>${k[1]}</span></div>`).join("");
+ const k=v=>n(v/1000)+"k";
+ chart("c1",r,[{k:"req",n:"Requirement",c:"--a"},{k:"sup",n:"Supplied",c:"--b"}],"bar",k,true);
+ chart("c2",r,[{k:"pk",n:"Peak demand",c:"--a"},{k:"met",n:"Peak met",c:"--g"}],"line",k,false);
+ chart("c3",r,[{k:"ns",n:"Not supplied",c:"--c"}],"bar",v=>n(v),true);
+ chart("c4",r,[{k:"lf",n:"Load factor",c:"--a"}],"line",v=>v.toFixed(0)+"%",false);
+ $("tb").innerHTML="<tr><th>Month</th><th>Requirement (MU)</th><th>Supplied (MU)</th><th>Not supplied (MU)</th><th>Peak demand (MW)</th><th>Peak met (MW)</th><th>Not met (MW)</th><th>Per day (MU)</th><th>Load factor</th></tr>"+r.map(d=>`<tr><td>${d.m} 2026</td><td>${n(d.req)}</td><td>${n(d.sup)}</td><td>${n(d.ns)}</td><td>${n(d.pk)}</td><td>${n(d.met)}</td><td>${n(d.dnm)}</td><td>${n(d.rpd,1)}</td><td>${d.lf.toFixed(1)}%</td></tr>`).join("");
+ $("seg").innerHTML=["All","FY2025-26","FY2026-27"].map(f=>`<button aria-pressed="${f==fy}" data-f="${f}">${f=="All"?"All months":f}</button>`).join("");
+ $("seg").querySelectorAll("button").forEach(b=>b.onclick=()=>{fy=b.dataset.f;render()})}
+render();matchMedia("(prefers-color-scheme:dark)").addEventListener("change",render);
+</script></body></html>
