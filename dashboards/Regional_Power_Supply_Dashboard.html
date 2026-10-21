@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Regional Power Supply Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f9;--sf:#fff;--tx:#1d2433;--mu:#5d6779;--bd:#dfe3ea;--gr:#e9edf3;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161d;--sf:#1b212b;--tx:#e8ecf2;--mu:#9aa5b8;--bd:#2c3440;--gr:#2a313c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12161d;--sf:#1b212b;--tx:#e8ecf2;--mu:#9aa5b8;--bd:#2c3440;--gr:#2a313c;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 2px;font-weight:600}
+.sub{color:var(--mu);margin:0 0 16px}
+.f{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.f label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:4px}
+select{background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:7px 10px;font:inherit;min-width:170px}
+select:focus-visible{outline:2px solid #2f6fed;outline-offset:1px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.c{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:14px}
+.k .c b{display:block;font-size:24px;font-weight:600;margin-top:2px}
+.k .c span{color:var(--mu);font-size:12px}
+.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.g h2{font-size:14px;margin:0 0 10px;font-weight:600}
+.box{position:relative;height:270px}
+.wide{grid-column:1/-1}
+.sc{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--gr)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mu);font-weight:600;font-size:12px}
+.note{color:var(--mu);font-size:12px;margin-top:10px}
+@media(max-width:760px){.g{grid-template-columns:minmax(0,1fr)}}
+</style></head><body><div class="w">
+<h1>Regional power supply dashboard</h1>
+<p class="sub">Jan–Aug 2026, five regional grids. Source: fact_power_regional_level.csv</p>
+<div class="f">
+<label>Region<select id="fr"></select></label>
+<label>Financial year<select id="fy"></select></label>
+</div>
+<div class="k" id="k"></div>
+<div class="g">
+<div class="c wide"><h2>Energy requirement by month (MU)</h2><div class="box"><canvas id="c1"></canvas></div></div>
+<div class="c"><h2>Share of energy requirement</h2><div class="box"><canvas id="c2"></canvas></div></div>
+<div class="c"><h2>Energy not supplied by month (MU)</h2><div class="box"><canvas id="c3"></canvas></div></div>
+<div class="c"><h2>Load factor by month (%)</h2><div class="box"><canvas id="c4"></canvas></div></div>
+<div class="c"><h2>Peak demand vs peak met (MW)</h2><div class="box"><canvas id="c5"></canvas></div></div>
+<div class="c wide"><h2>Region summary</h2><div class="sc"><table id="t"></table></div>
+<p class="note">Peak figures add each region’s own peak, which can fall on different days, so the sum is higher than the true all-India peak. MU = million units.</p></div>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D=[{"m":"2026-01","fy":"FY2025-26","r":"Eastern Region","c":"ER","req":15222.0,"sup":15189.0,"ns":33.0,"pk":24916.0,"met":24878.0,"dnm":38.0,"lf":82.0618},{"m":"2026-02","fy":"FY2025-26","r":"Eastern Region","c":"ER","req":14217.0,"sup":14215.0,"ns":2.0,"pk":24991.0,"met":24986.0,"dnm":5.0,"lf":84.6605},{"m":"2026-03","fy":"FY2025-26","r":"Eastern Region","c":"ER","req":16985.0,"sup":16985.0,"ns":0.0,"pk":28391.0,"met":27876.0,"dnm":515.0,"lf":81.8959},{"m":"2026-04","fy":"FY2026-27","r":"Eastern Region","c":"ER","req":19029.0,"sup":19028.0,"ns":1.0,"pk":32832.0,"met":32758.0,"dnm":74.0,"lf":80.6758},{"m":"2026-05","fy":"FY2026-27","r":"Eastern Region","c":"ER","req":19686.0,"sup":19683.0,"ns":3.0,"pk":34908.0,"met":34875.0,"dnm":33.0,"lf":75.8585},{"m":"2026-06","fy":"FY2026-27","r":"Eastern Region","c":"ER","req":20839.0,"sup":20834.0,"ns":5.0,"pk":35916.0,"met":35911.0,"dnm":5.0,"lf":80.5773},{"m":"2026-07","fy":"FY2026-27","r":"Eastern Region","c":"ER","req":20827.0,"sup":20807.0,"ns":20.0,"pk":32541.0,"met":32541.0,"dnm":0.0,"lf":85.942},{"m":"2026-08","fy":"FY2026-27","r":"Eastern Region","c":"ER","req":21389.0,"sup":21339.0,"ns":50.0,"pk":35635.0,"met":35635.0,"dnm":0.0,"lf":80.4867},{"m":"2026-01","fy":"FY2025-26","r":"North-Eastern Region","c":"NER","req":1592.0,"sup":1592.0,"ns":0.0,"pk":3021.0,"met":3021.0,"dnm":0.0,"lf":70.8304},{"m":"2026-02","fy":"FY2025-26","r":"North-Eastern Region","c":"NER","req":1458.0,"sup":1457.0,"ns":1.0,"pk":3076.0,"met":3076.0,"dnm":0.0,"lf":70.4862},{"m":"2026-03","fy":"FY2025-26","r":"North-Eastern Region","c":"NER","req":1547.0,"sup":1547.0,"ns":0.0,"pk":3021.0,"met":3021.0,"dnm":0.0,"lf":68.8282},{"m":"2026-04","fy":"FY2026-27","r":"North-Eastern Region","c":"NER","req":1597.0,"sup":1594.0,"ns":3.0,"pk":3752.0,"met":3743.0,"dnm":9.0,"lf":59.1474},{"m":"2026-05","fy":"FY2026-27","r":"North-Eastern Region","c":"NER","req":1864.0,"sup":1862.0,"ns":2.0,"pk":3952.0,"met":3952.0,"dnm":0.0,"lf":63.3271},{"m":"2026-06","fy":"FY2026-27","r":"North-Eastern Region","c":"NER","req":2139.0,"sup":2134.0,"ns":5.0,"pk":4018.0,"met":4018.0,"dnm":0.0,"lf":73.7653},{"m":"2026-07","fy":"FY2026-27","r":"North-Eastern Region","c":"NER","req":2253.0,"sup":2252.0,"ns":1.0,"pk":4106.0,"met":4106.0,"dnm":0.0,"lf":73.7185},{"m":"2026-08","fy":"FY2026-27","r":"North-Eastern Region","c":"NER","req":2363.0,"sup":2361.0,"ns":2.0,"pk":4308.0,"met":4306.0,"dnm":2.0,"lf":73.6969},{"m":"2026-01","fy":"FY2025-26","r":"Northern Region","c":"NR","req":40497.0,"sup":40465.0,"ns":32.0,"pk":75554.0,"met":75554.0,"dnm":0.0,"lf":71.9862},{"m":"2026-02","fy":"FY2025-26","r":"Northern Region","c":"NR","req":34737.0,"sup":34719.0,"ns":18.0,"pk":68098.0,"met":68098.0,"dnm":0.0,"lf":75.8689},{"m":"2026-03","fy":"FY2025-26","r":"Northern Region","c":"NR","req":36812.0,"sup":36767.0,"ns":45.0,"pk":63286.0,"met":63286.0,"dnm":0.0,"lf":78.0868},{"m":"2026-04","fy":"FY2026-27","r":"Northern Region","c":"NR","req":39473.0,"sup":39306.0,"ns":167.0,"pk":76862.0,"met":76611.0,"dnm":251.0,"lf":71.2583},{"m":"2026-05","fy":"FY2026-27","r":"Northern Region","c":"NR","req":49649.0,"sup":49557.0,"ns":92.0,"pk":87675.0,"met":87675.0,"dnm":0.0,"lf":75.9725},{"m":"2026-06","fy":"FY2026-27","r":"Northern Region","c":"NR","req":54336.0,"sup":54240.0,"ns":96.0,"pk":94416.0,"met":93981.0,"dnm":435.0,"lf":80.158},{"m":"2026-07","fy":"FY2026-27","r":"Northern Region","c":"NR","req":57758.0,"sup":57611.0,"ns":147.0,"pk":95048.0,"met":95048.0,"dnm":0.0,"lf":81.4685},{"m":"2026-08","fy":"FY2026-27","r":"Northern Region","c":"NR","req":56566.0,"sup":56475.0,"ns":91.0,"pk":87251.0,"met":87251.0,"dnm":0.0,"lf":86.9987},{"m":"2026-01","fy":"FY2025-26","r":"Southern Region","c":"SR","req":36985.0,"sup":36985.0,"ns":0.0,"pk":64892.0,"met":64892.0,"dnm":0.0,"lf":76.6058},{"m":"2026-02","fy":"FY2025-26","r":"Southern Region","c":"SR","req":36711.0,"sup":36706.0,"ns":5.0,"pk":68282.0,"met":68246.0,"dnm":36.0,"lf":80.037},{"m":"2026-03","fy":"FY2025-26","r":"Southern Region","c":"SR","req":43885.0,"sup":43885.0,"ns":0.0,"pk":73805.0,"met":73805.0,"dnm":0.0,"lf":79.9204},{"m":"2026-04","fy":"FY2026-27","r":"Southern Region","c":"SR","req":43717.0,"sup":43696.0,"ns":21.0,"pk":74473.0,"met":74469.0,"dnm":4.0,"lf":81.4955},{"m":"2026-05","fy":"FY2026-27","r":"Southern Region","c":"SR","req":40434.0,"sup":40430.0,"ns":4.0,"pk":68234.0,"met":68234.0,"dnm":0.0,"lf":79.6398},{"m":"2026-06","fy":"FY2026-27","r":"Southern Region","c":"SR","req":38186.0,"sup":38166.0,"ns":20.0,"pk":64266.0,"met":64266.0,"dnm":0.0,"lf":82.4827},{"m":"2026-07","fy":"FY2026-27","r":"Southern Region","c":"SR","req":41957.0,"sup":41941.0,"ns":16.0,"pk":72602.0,"met":72471.0,"dnm":131.0,"lf":77.786},{"m":"2026-08","fy":"FY2026-27","r":"Southern Region","c":"SR","req":41926.0,"sup":41916.0,"ns":10.0,"pk":70328.0,"met":70328.0,"dnm":0.0,"lf":80.1085},{"m":"2026-01","fy":"FY2025-26","r":"Western Region","c":"WR","req":47226.0,"sup":47225.0,"ns":1.0,"pk":82724.0,"met":82695.0,"dnm":29.0,"lf":76.7573},{"m":"2026-02","fy":"FY2025-26","r":"Western Region","c":"WR","req":44789.0,"sup":44787.0,"ns":2.0,"pk":83081.0,"met":83081.0,"dnm":0.0,"lf":80.2197},{"m":"2026-03","fy":"FY2025-26","r":"Western Region","c":"WR","req":48918.0,"sup":48908.0,"ns":10.0,"pk":78712.0,"met":78712.0,"dnm":0.0,"lf":83.5153},{"m":"2026-04","fy":"FY2026-27","r":"Western Region","c":"WR","req":49140.0,"sup":49119.0,"ns":21.0,"pk":81355.0,"met":81355.0,"dnm":0.0,"lf":83.8557},{"m":"2026-05","fy":"FY2026-27","r":"Western Region","c":"WR","req":52228.0,"sup":52029.0,"ns":199.0,"pk":82114.0,"met":82000.0,"dnm":114.0,"lf":85.2823},{"m":"2026-06","fy":"FY2026-27","r":"Western Region","c":"WR","req":49806.0,"sup":49751.0,"ns":55.0,"pk":80330.0,"met":80330.0,"dnm":0.0,"lf":86.0184},{"m":"2026-07","fy":"FY2026-27","r":"Western Region","c":"WR","req":46176.0,"sup":46168.0,"ns":8.0,"pk":74692.0,"met":74692.0,"dnm":0.0,"lf":83.0795},{"m":"2026-08","fy":"FY2026-27","r":"Western Region","c":"WR","req":45786.0,"sup":45738.0,"ns":48.0,"pk":77169.0,"met":77142.0,"dnm":27.0,"lf":79.6917}];
+const PAL=['#2f6fed','#188038','#e8710a','#a142f4','#d93025'];
+const regs=[...new Set(D.map(d=>d.r))],fys=[...new Set(D.map(d=>d.fy))];
+const col=r=>PAL[regs.indexOf(r)%PAL.length];
+const fr=document.getElementById('fr'),fy=document.getElementById('fy');
+fr.innerHTML='<option>All regions</option>'+regs.map(r=>`<option>${r}</option>`).join('');
+fy.innerHTML='<option>All years</option>'+fys.map(r=>`<option>${r}</option>`).join('');
+const N=v=>Math.round(v).toLocaleString('en-IN'),sum=(a,k)=>a.reduce((s,d)=>s+d[k],0);
+const ML=m=>new Date(m+'-01T00:00:00').toLocaleString('en-US',{month:'short',year:'2-digit'});
+let ch={};
+function mk(id,cfg){if(ch[id])ch[id].destroy();ch[id]=new Chart(document.getElementById(id),cfg)}
+function render(){
+const css=getComputedStyle(document.documentElement),tx=css.getPropertyValue('--mu').trim(),gr=css.getPropertyValue('--gr').trim();
+Chart.defaults.color=tx;Chart.defaults.font.family='"IBM Plex Sans",system-ui,sans-serif';
+const F=D.filter(d=>(fr.value==='All regions'||d.r===fr.value)&&(fy.value==='All years'||d.fy===fy.value));
+const M=[...new Set(F.map(d=>d.m))].sort(),R=regs.filter(r=>F.some(d=>d.r===r)),L=M.map(ML);
+const get=(r,m,k)=>{const x=F.find(d=>d.r===r&&d.m===m);return x?x[k]:null};
+const req=sum(F,'req'),ns=sum(F,'ns');
+const pkm=M.map(m=>sum(F.filter(d=>d.m===m),'pk')),metm=M.map(m=>sum(F.filter(d=>d.m===m),'met'));
+const kp=[['Energy requirement',N(req)+' MU'],['Energy supplied',N(sum(F,'sup'))+' MU'],['Energy not supplied',N(ns)+' MU'],['Shortfall rate',(ns/req*100).toFixed(2)+'%'],['Average load factor',(sum(F,'lf')/F.length).toFixed(1)+'%'],['Highest monthly peak',N(Math.max(...pkm))+' MW']];
+document.getElementById('k').innerHTML=kp.map(([a,b])=>`<div class="c"><span>${a}</span><b>${b}</b></div>`).join('');
+const sc=(t)=>({x:{grid:{display:false}},y:{grid:{color:gr},title:{display:!!t,text:t}}});
+const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10}}}};
+const ser=(k,f)=>R.map(r=>({label:r,data:M.map(m=>get(r,m,k)),borderColor:col(r),backgroundColor:col(r),tension:.25,...f}));
+mk('c1',{type:'line',data:{labels:L,datasets:ser('req',{})},options:{...base,scales:sc('MU')}});
+mk('c2',{type:'doughnut',data:{labels:R,datasets:[{data:R.map(r=>sum(F.filter(d=>d.r===r),'req')),backgroundColor:R.map(col),borderWidth:0}]},options:{...base,cutout:'60%'}});
+mk('c3',{type:'bar',data:{labels:L,datasets:ser('ns',{})},options:{...base,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:gr}}}}});
+mk('c4',{type:'line',data:{labels:L,datasets:ser('lf',{})},options:{...base,scales:{x:{grid:{display:false}},y:{grid:{color:gr},min:50,max:100}}}});
+mk('c5',{type:'bar',data:{labels:L,datasets:[{label:'Peak demand',data:pkm,backgroundColor:'#2f6fed'},{label:'Peak met',data:metm,backgroundColor:'#188038'}]},options:{...base,scales:sc('MW')}});
+document.getElementById('t').innerHTML='<tr><th>Region</th><th>Requirement (MU)</th><th>Supplied (MU)</th><th>Not supplied (MU)</th><th>Shortfall %</th><th>Avg load factor %</th><th>Highest peak (MW)</th><th>Worst unmet peak (MW)</th></tr>'+
+R.map(r=>{const a=F.filter(d=>d.r===r),q=sum(a,'req'),n=sum(a,'ns');return `<tr><td>${r}</td><td>${N(q)}</td><td>${N(sum(a,'sup'))}</td><td>${N(n)}</td><td>${(n/q*100).toFixed(2)}</td><td>${(sum(a,'lf')/a.length).toFixed(1)}</td><td>${N(Math.max(...a.map(d=>d.pk)))}</td><td>${N(Math.max(...a.map(d=>d.dnm)))}</td></tr>`}).join('');
+}
+fr.onchange=fy.onchange=render;
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+render();
+</script></body></html>
