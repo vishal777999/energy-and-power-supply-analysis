@@ -24,13 +24,13 @@ This project analyzes energy consumption and power supply data using data cleani
 ## 📂 Project Structure
 ```text
 energy-and-power-supply-analysis/
-├── dashboards/
-├── data/
-│   └── processed/
+├──Energy and Peak DATA.xlsx
 ├── cleandata.ipynb
 ├── eda(git).ipynb
 ├── ml_pipeline.ipynb
-└── Energy and Peak DATA.xlsx
+├── data/
+│   └── processed/
+├── dashboards/
 ```
 
 ## 🚀 Installation and Setup
