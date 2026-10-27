@@ -88,10 +88,3 @@ GitHub:
 - https://github.com/Ambar-NaikGurav
 - https://github.com/Tanmay-0501
 
-
-## 📄 License
-Add a LICENSE file to specify the terms of use.
-
----
-⭐ If you find this project useful, please star the repository!
-
